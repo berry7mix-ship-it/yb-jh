@@ -1,0 +1,8 @@
+{
+  "name": "영빈 ❤️ 지홍의 모바일 청첩장",
+  "description": "2027년 10월 16일 토요일 오후 2시 20분, 저희 두 사람의 결혼식에 초대합니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
