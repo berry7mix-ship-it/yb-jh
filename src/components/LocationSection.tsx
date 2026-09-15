@@ -225,7 +225,8 @@ export const LocationSection: React.FC = () => {
               <div>
                 <span className="font-semibold text-[#2A2421] block text-[13px]">지하철</span>
                 <p className="text-[#5C5045] mt-0.5">
-                  대구 2호선 영남대역 4번출구 셔틀버스 (5분 소요)
+                  대구 2호선 영남대역 4번출구 셔틀버스<br />
+                  (5분 소요)
                 </p>
               </div>
             </div>
