@@ -5,10 +5,13 @@ interface Petal {
   id: number;
   left: number;
   size: number;
-  duration: number;
+  fallDuration: number;
+  swayDuration: number;
   delay: number;
-  rotate: number;
-  drift: number;
+  initialRotate: number;
+  swayAmount: number;
+  variant: 0 | 1 | 2;
+  opacity: number;
 }
 
 export const PetalEffect: React.FC = () => {
@@ -21,14 +24,23 @@ export const PetalEffect: React.FC = () => {
       return;
     }
 
-    const items: Petal[] = Array.from({ length: 18 }).map((_, i) => ({
+    // Respect prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setPetals([]);
+      return;
+    }
+
+    const items: Petal[] = Array.from({ length: 16 }).map((_, i) => ({
       id: i,
-      left: Math.random() * 100, // percentage
-      size: Math.random() * 8 + 8, // 8px to 16px
-      duration: Math.random() * 6 + 7, // 7s to 13s
-      delay: Math.random() * 5,
-      rotate: Math.random() * 360,
-      drift: (Math.random() - 0.5) * 60,
+      left: (i * 6.2 + Math.random() * 4) % 98,
+      size: Math.random() * 7 + 10, // 10px to 17px
+      fallDuration: Math.random() * 6 + 9, // 9s to 15s
+      swayDuration: Math.random() * 2.5 + 3, // 3s to 5.5s
+      delay: Math.random() * 8,
+      initialRotate: Math.random() * 360,
+      swayAmount: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 24 + 16),
+      variant: (i % 3) as 0 | 1 | 2,
+      opacity: Math.random() * 0.25 + 0.55,
     }));
 
     setPetals(items);
@@ -41,56 +53,104 @@ export const PetalEffect: React.FC = () => {
         id="btn-petal-toggle"
         onClick={() => setEnabled((prev) => !prev)}
         title={enabled ? '꽃잎 효과 끄기' : '꽃잎 효과 켜기'}
-        className={`fixed top-4 left-4 z-40 p-2 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm border ${
+        aria-label={enabled ? '꽃잎 효과 끄기' : '꽃잎 효과 켜기'}
+        className={`fixed top-3.5 right-3.5 z-40 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 shadow-xs border active:scale-95 ${
           enabled
-            ? 'bg-white/85 text-[#c78283] border-[#f4dcd6] hover:bg-white'
-            : 'bg-white/60 text-[#a89f91] border-[#e8e2d9] hover:bg-white/80'
+            ? 'bg-white/90 text-[#C48283] border-[#F0D9D4] hover:bg-white'
+            : 'bg-white/65 text-[#A89F91] border-[#E8E2D9] hover:bg-white/85'
         }`}
       >
-        <Sparkles className="w-3.5 h-3.5" />
+        <Sparkles className="w-4 h-4" />
       </button>
 
       {/* Petals Canvas Overlay */}
-      {enabled && (
-        <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden">
+      {enabled && petals.length > 0 && (
+        <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden" aria-hidden="true">
           {petals.map((petal) => (
             <div
               key={petal.id}
-              className="absolute top-[-20px] will-change-transform opacity-75"
+              className="absolute top-[-32px] will-change-transform"
               style={{
                 left: `${petal.left}%`,
-                animation: `fall ${petal.duration}s linear infinite`,
-                animationDelay: `${petal.delay}s`,
+                animation: `petalFall ${petal.fallDuration}s linear ${petal.delay}s infinite`,
               }}
             >
               <div
-                className="w-3.5 h-4 bg-gradient-to-br from-[#ffd5d9] via-[#ffccd2] to-[#f8b6be] rounded-full shadow-xs"
+                className="will-change-transform"
                 style={{
-                  width: `${petal.size}px`,
-                  height: `${petal.size * 1.25}px`,
-                  borderRadius: '50% 0 50% 50%',
-                  transform: `rotate(${petal.rotate}deg)`,
-                  filter: 'blur(0.2px)',
+                  animation: `petalSway ${petal.swayDuration}s ease-in-out ${petal.delay}s infinite alternate`,
+                  ['--sway-x' as string]: `${petal.swayAmount}px`,
                 }}
-              />
+              >
+                <svg
+                  width={petal.size}
+                  height={petal.size * 1.25}
+                  viewBox="0 0 24 30"
+                  fill="none"
+                  style={{
+                    opacity: petal.opacity,
+                    transform: `rotate(${petal.initialRotate}deg)`,
+                    filter: 'drop-shadow(0 2px 3px rgba(180, 130, 130, 0.12))',
+                  }}
+                >
+                  <defs>
+                    <linearGradient id={`petal-grad-${petal.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      {petal.variant === 0 && (
+                        <>
+                          <stop offset="0%" stopColor="#FFF0F2" />
+                          <stop offset="55%" stopColor="#FAD2D8" />
+                          <stop offset="100%" stopColor="#F2B8C2" />
+                        </>
+                      )}
+                      {petal.variant === 1 && (
+                        <>
+                          <stop offset="0%" stopColor="#FFF7F5" />
+                          <stop offset="60%" stopColor="#F8DCE0" />
+                          <stop offset="100%" stopColor="#EFC3CA" />
+                        </>
+                      )}
+                      {petal.variant === 2 && (
+                        <>
+                          <stop offset="0%" stopColor="#FFFDF9" />
+                          <stop offset="65%" stopColor="#F7E5E2" />
+                          <stop offset="100%" stopColor="#EBD0CC" />
+                        </>
+                      )}
+                    </linearGradient>
+                  </defs>
+                  {/* Delicate notched cherry/rose petal silhouette */}
+                  <path
+                    d="M12 29C6 25.5 1.5 18.5 2 10.5C2.4 4.5 6.8 1 10.2 2.8C11.1 3.3 11.6 4.2 12 5C12.4 4.2 12.9 3.3 13.8 2.8C17.2 1 21.6 4.5 22 10.5C22.5 18.5 18 25.5 12 29Z"
+                    fill={`url(#petal-grad-${petal.id})`}
+                  />
+                </svg>
+              </div>
             </div>
           ))}
 
           <style>{`
-            @keyframes fall {
+            @keyframes petalFall {
               0% {
-                transform: translateY(-20px) translateX(0px) rotate(0deg);
+                transform: translate3d(0, -30px, 0) rotate(0deg);
                 opacity: 0;
               }
-              15% {
-                opacity: 0.85;
+              12% {
+                opacity: 1;
               }
-              85% {
-                opacity: 0.75;
+              88% {
+                opacity: 0.9;
               }
               100% {
-                transform: translateY(105vh) translateX(45px) rotate(480deg);
+                transform: translate3d(28px, 106vh, 0) rotate(320deg);
                 opacity: 0;
+              }
+            }
+            @keyframes petalSway {
+              0% {
+                transform: translateX(calc(var(--sway-x, 20px) * -0.6)) rotateX(10deg) rotateY(-15deg);
+              }
+              100% {
+                transform: translateX(var(--sway-x, 20px)) rotateX(-15deg) rotateY(20deg);
               }
             }
           `}</style>
